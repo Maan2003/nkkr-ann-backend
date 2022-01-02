@@ -5,7 +5,7 @@ use actix_web::{
     App, HttpResponse, HttpServer, Result,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::{query, query_scalar};
+use sqlx::{migrate, query, query_scalar};
 use std::env;
 
 type Db = sqlx::Pool<sqlx::Postgres>;
@@ -70,12 +70,18 @@ async fn notifs(db: Data<Db>, pg: Query<Pagination>) -> Result<HttpResponse> {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init();
+    // Get the port number to listen on.
+    let port = env::var("PORT")
+        .unwrap_or_else(|_| "3000".to_string())
+        .parse()
+        .expect("PORT must be a number");
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL is not set");
     let db = Db::connect(&database_url).await.unwrap();
+    migrate!().run(&db).await.unwrap();
 
     HttpServer::new(move || App::new().service(notifs).data(db.clone()))
-        .bind("localhost:8080")?
+        .bind(("0.0.0.0", port))?
         .run()
         .await
 }
