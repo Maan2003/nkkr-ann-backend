@@ -64,6 +64,7 @@ async fn notifs(db: Data<Db>, pg: Query<Pagination>) -> Result<HttpResponse> {
     let body = Notifs { notifs, total };
     Ok(HttpResponse::Ok()
         .insert_header(("Charset", "UTF-8"))
+        .insert_header(("Access-Control-Allow-Origin", "*"))
         .json(body))
 }
 
